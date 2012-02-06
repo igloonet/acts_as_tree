@@ -70,6 +70,14 @@ module ActiveRecord
           nodes
         end
 
+        def root?
+          parent == nil
+        end
+        
+        def leaf?
+          children.length == 0
+        end
+
         # Returns the root node of the tree.
         def root
           node = self
@@ -89,6 +97,42 @@ module ActiveRecord
         #   subchild1.self_and_siblings # => [subchild1, subchild2]
         def self_and_siblings
           parent ? parent.children : self.class.roots
+        end
+        
+        # Returns a flat list of the descendants of the current node.
+        #
+        #   root.descendants # => [child1, subchild1, subchild2]
+        def descendants(node=self)
+          nodes = []
+          nodes << node unless node == self
+          
+          node.children.each do |child|
+            nodes += descendants(child)
+          end
+            
+          nodes.compact
+        end
+
+        # returns a list of self and descendants
+        def self_and_descendants(node=self)
+          nodes = []
+          nodes << node
+          
+          node.children.each do |child|
+            nodes += descendants(child)
+          end
+            
+          nodes.compact
+        end
+
+        def childless
+          self.descendants.collect{|d| d.children.empty? ? d : nil}.compact
+        end
+
+        # Returns the level of this object in the tree
+        # root level is 0
+        def level
+          parent_id.nil? ? 0 : ancestors.count
         end
       end
     end
